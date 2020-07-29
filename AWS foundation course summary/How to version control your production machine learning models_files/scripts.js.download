@@ -1,0 +1,105 @@
+// Custom scripts file
+
+jQuery( document ).ready(function( $ ) {
+
+  'use strict';
+
+  // Function to retrieve URL params
+  $.urlParam = function(name){
+    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+    if (results==null){
+      return null;
+    }
+    else{
+      return decodeURI(results[1]) || 0;
+    }
+  }
+
+
+  // Generic function that runs on window resize.
+  function resizeStuff() {
+  }
+
+  // Runs function once on window resize.
+  var TO = false;
+  $(window).resize(function () {
+    if (TO !== false) {
+      clearTimeout(TO);
+    }
+
+    
+
+    // 200 is time in miliseconds.
+    TO = setTimeout(resizeStuff, 200);
+  }).resize();
+
+  // body no scroll when menu is open
+  $('header.syn-page-header').on('click', function(e) {
+    // console.log(e, $(this));
+    if ($(this).hasClass('nav-open')) {
+      $('body').addClass('no-scroll');
+    } else {
+      $('body').removeClass('no-scroll');
+    }
+  })
+
+  $('.syn-dropdown').on('click', function() {
+    $(this).toggleClass('open')
+  })
+
+   // Script to sort posts.
+  $('#filter-dropdown').on('change', function(e) {
+    // if search query exists
+    var url, query;
+    var hasSQuery = location.href.match(/\?s(.*)/g);
+    if(hasSQuery) {
+      hasSQuery = hasSQuery[0].replace(/\&(.*)/g, '');
+      url = location.href.replace(/\?(.*)/g, '');
+      query = '&';
+    } else {
+      hasSQuery = false;
+      url = location.href.replace(/\?(.*)/g, '');
+      query = '?';
+    }
+    var option = e.target.options[e.target.selectedIndex].value;
+    var newUrl;
+    if(hasSQuery) {
+      newUrl = url + hasSQuery + query + option;
+    } else {
+      newUrl = url + query + option;
+    }
+    // console.log(option, url, newUrl);
+    document.location.href = newUrl;
+  });
+
+  // Change the dropdown to match the query
+  var url = new URL(document.location);
+  var params = url.search.match(/\orderby(.*)/g);
+  if (params && params[0]) {
+    $("#filter-dropdown").val(params[0]);
+  }
+
+  // Hide sign in/up buttons when logged in
+  function checkSignIn() {
+    if(sessionStorage.getItem('signedIn') == true) {
+      $('.hide-if-signed-in').addClass('signed-in');
+    } else {
+      fetch('/webapi/user', {
+        headers: {
+          accept: 'application/json, text/plain, */*',
+        }
+      }).then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          $('.hide-if-signed-in').addClass('signed-in');
+          sessionStorage.setItem('signedIn', true);
+        }
+      }).catch(err => {
+        // console.log('error', err);
+      })
+    }
+  }
+
+  checkSignIn();
+
+});
